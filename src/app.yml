@@ -1,6 +1,6 @@
 name: Rust virtual machine
 version: "1.0"
-author: Guido Docter <dubmastergee@gmail.com>
+author: Guido Docter <guido.docter@gmail.com>
 about: 8-bit virtual machine with 16-bit addressing, implementing a subset of the 6502 instruction set
 args:
     - INPUT:

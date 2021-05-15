@@ -1,0 +1,21 @@
+name: Rust virtual machine
+version: "1.0"
+author: Guido Docter <dubmastergee@gmail.com>
+about: 8-bit virtual machine with 16-bit addressing, implementing a subset of the 6502 instruction set
+args:
+    - INPUT:
+        help: The binary to load
+        required: false
+        index: 1
+    - OUTPUT:
+        help: The output file
+        required: false
+        index: 2
+    - address:
+        short: a
+        help: the memory address in hex to load the binary into, default 0x8000
+        required: false
+    - verbose:
+        short: v
+        multiple: true
+        help: Sets the level of verbosity

@@ -1,4 +1,5 @@
-use crate::constants::{ Byte, Word, Num, Factory };
+use crate::types::{ Byte, Word, Num };
+use crate::traits::{Factory, MemoryController};
 
 const SIZE: Num = 0xffff;
 
@@ -13,16 +14,16 @@ impl Factory for Memory {
     }
 }
 
-impl Memory {
-    pub fn read(&self, address: Word) -> Byte {
+impl MemoryController for Memory {
+    fn read(&self, address: Word) -> Byte {
         self.data[address as usize]
     }
 
-    pub fn write(&mut self, address: Word, value: Byte) {
+    fn write(&mut self, address: Word, value: Byte) {
         self.data[address as usize] = value;
     }
 
-    pub fn reset(&mut self) {
+    fn reset(&mut self) {
         for i in 0..(SIZE) {
             self.data[i] = 0;
         }

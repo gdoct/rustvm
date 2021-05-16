@@ -1,6 +1,6 @@
-use crate::constants::{Byte, Word, Instruction, VirtualCpu, CpuFlags };
-
-use std::io::{Error, ErrorKind};
+use crate::types::{ Byte, Word,  CpuFlags };
+use crate::traits::{ VirtualCpu, Instruction };
+use std::io::{ Error, ErrorKind };
 
 pub fn parse_opcode(opcode: Byte) -> std::result::Result<Box<dyn Instruction + 'static>, Error> {
     match opcode {
@@ -17,7 +17,7 @@ pub fn parse_opcode(opcode: Byte) -> std::result::Result<Box<dyn Instruction + '
         0xbd => { Ok(Box::new(LdaAbsXInstruction {})) }
         0xb9 => { Ok(Box::new(LdaAbsYInstruction {})) }
 
-        _ => { println!("[ERROR] E_OPCODE_NOT_IMPLEMENTED: OPCODE {:#04x}", opcode); Err(Error::new(ErrorKind::Other, format!("opcode {} not implemented", opcode))) }
+        _ => { Err(Error::new(ErrorKind::Other, format!("opcode {} not implemented", opcode))) }
     }
 }
 /**
@@ -32,8 +32,9 @@ pub struct NopInstruction {}
 impl Instruction for NopInstruction {
     fn opcode (&self) -> &str  { "NOP"}
     fn hexcode (&self) -> Byte { 0xea }
-    fn execute(&self, _cpu: &mut dyn VirtualCpu) {
+    fn execute(&self, _cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
         // nop
+        Ok(())
     }
 }
 
@@ -41,8 +42,9 @@ pub struct BrkInstruction {}
 impl Instruction for BrkInstruction {
     fn opcode (&self) -> &str  { "BRK"}
     fn hexcode (&self) -> Byte { 0x00 }
-    fn execute(&self, cpu: &mut dyn VirtualCpu) {
-        cpu.set_flag(CpuFlags::BREAK, 1)
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        cpu.set_flag(CpuFlags::BREAK, true);
+        Ok(())
     }
 }
 
@@ -50,9 +52,10 @@ pub struct JmpAbsInstruction {}
 impl Instruction for JmpAbsInstruction {
     fn opcode (&self) -> &str  { "JMP"}
     fn hexcode (&self) -> Byte { 0x4c }
-    fn execute(&self, cpu: &mut dyn VirtualCpu) {
-        let addr = cpu.fetch_word();
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let addr = cpu.fetch_word()?;
         cpu.set_pc(addr);
+        Ok(())
     }
 }
 
@@ -60,10 +63,11 @@ pub struct JmpIndInstruction {}
 impl Instruction for JmpIndInstruction {
     fn opcode (&self) -> &str { "JMP"}
     fn hexcode (&self) -> Byte { 0x6c }
-    fn execute(&self, cpu: &mut dyn VirtualCpu) {
-        let addr_of_addr = cpu.fetch_word();
-        let addr = cpu.read_memory_word(addr_of_addr);
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let addr_of_addr = cpu.fetch_word()?;
+        let addr = cpu.read_word(addr_of_addr);
         cpu.set_pc(addr);
+        Ok(())
     }
 }
 
@@ -81,9 +85,10 @@ pub struct LdaImmInstruction {}
 impl Instruction for LdaImmInstruction {
     fn opcode (&self) -> &str  { "LDA"}
     fn hexcode (&self) -> Byte { 0xA9 }
-    fn execute(&self, cpu: &mut dyn VirtualCpu) {
-        let val = cpu.fetch_byte();
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let val = cpu.fetch_byte()?;
         cpu.set_a(val);
+        Ok(())
     }
 }
 
@@ -91,10 +96,11 @@ pub struct LdaZpInstruction {}
 impl Instruction for LdaZpInstruction {
     fn opcode (&self) -> &str  { "LDA"}
     fn hexcode (&self) -> Byte { 0xA5 }
-    fn execute(&self, cpu: &mut dyn VirtualCpu) {
-        let addr = cpu.fetch_byte() as Word;
-        let val = cpu.read_memory(addr);
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let addr = cpu.fetch_byte()? as Word;
+        let val = cpu.read_byte(addr);
         cpu.set_a(val);
+        Ok(())
     }
 }
 
@@ -102,10 +108,11 @@ pub struct LdaZpXInstruction {}
 impl Instruction for LdaZpXInstruction {
     fn opcode (&self) -> &str  { "LDA"}
     fn hexcode (&self) -> Byte { 0xB5 }
-    fn execute(&self, cpu: &mut dyn VirtualCpu) {
-        let addr = (cpu.fetch_byte() + cpu.get_x()) as Word;
-        let val = cpu.read_memory(addr);
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let addr = (cpu.fetch_byte()? + cpu.get_x()) as Word;
+        let val = cpu.read_byte(addr);
         cpu.set_a(val);
+        Ok(())
     }
 }
 
@@ -113,10 +120,11 @@ pub struct LdaAbsInstruction {}
 impl Instruction for LdaAbsInstruction {
     fn opcode (&self) -> &str  { "LDA"}
     fn hexcode (&self) -> Byte { 0xAD }
-    fn execute(&self, cpu: &mut dyn VirtualCpu) {
-        let addr = cpu.fetch_word();
-        let val = cpu.read_memory(addr);
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let addr = cpu.fetch_word()?;
+        let val = cpu.read_byte(addr);
         cpu.set_a(val);
+        Ok(())
     }
 }
 
@@ -124,12 +132,13 @@ pub struct LdaAbsXInstruction {}
 impl Instruction for LdaAbsXInstruction {
     fn opcode (&self) -> &str  { "LDA"}
     fn hexcode (&self) -> Byte { 0xBD }
-    fn execute(&self, cpu: &mut dyn VirtualCpu) {
-        let addr = cpu.fetch_word();
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let addr = cpu.fetch_word()?;
         let add = cpu.get_x();
         let final_addr: Word = addr + (add as Word);
-        let val = cpu.read_memory(final_addr);
+        let val = cpu.read_byte(final_addr);
         cpu.set_a(val);
+        Ok(())
     }
 }
 
@@ -137,11 +146,12 @@ pub struct LdaAbsYInstruction {}
 impl Instruction for LdaAbsYInstruction {
     fn opcode (&self) -> &str  { "LDA"}
     fn hexcode (&self) -> Byte { 0xB9 }
-    fn execute(&self, cpu: &mut dyn VirtualCpu) {
-        let addr = cpu.fetch_word();
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let addr = cpu.fetch_word()?;
         let add = cpu.get_y();
         let final_addr: Word = addr + (add as Word);
-        let val = cpu.read_memory(final_addr);
+        let val = cpu.read_byte(final_addr);
         cpu.set_a(val);
+        Ok(())
     }
 }

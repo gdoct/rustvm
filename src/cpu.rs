@@ -1,6 +1,8 @@
-use crate::constants::{ Byte, Word, Bit, VirtualCpu, CpuFlags, CpuFlag, Factory };
+use crate::types::{ Byte, Word, Bit, CpuFlags, CpuFlag };
+use crate::traits::{ VirtualCpu, CpuController, Factory, MemoryController };
 use crate::memory::Memory;
 use crate::instruction::{parse_opcode};
+use std::io::{Error, ErrorKind};
 
 fn create_word(bytes: (Byte, Byte)) -> Word { ((bytes.0 as Word) << 8) | bytes.1 as Word }
 
@@ -20,56 +22,62 @@ impl Factory for Cpu {
             memory: Memory::new(),
             a : 0, x : 0, y : 0, 
             pc : 0xFFFC, sp : 0x0100,
-            flags : [0; 8]
+            flags : [false; 8]
         }
     }
 }
 
-impl VirtualCpu for Cpu {
-    fn reset(&mut self) {
+impl CpuController for Cpu {
+    fn reset(&mut self) -> std::io::Result<()> {
         self.a = 0;
         self.x = 0;
         self.y = 0;
         self.pc = 0xFFFC;
         self.sp = 0x0100;
-        for i in 0..7 { self.flags[i] = 0 }
+        for i in 0..7 { self.flags[i] = false }
         self.memory.reset();
+        Ok(())
     }
 
-    fn run(&mut self) {
-        while self.flags[CpuFlags::BREAK] != 1 {
-            self.step();
+    fn run(&mut self) -> std::io::Result<()> {
+        while !self.flags[CpuFlags::BREAK] {
+            self.step()?;
         } 
+        Ok(())
     }
 
-    fn step(&mut self) {
-        let opcode = self.fetch_byte();
-        match parse_opcode(opcode) {
-            Ok(instr) => { println!("{}", instr.opcode()); instr.execute(self) },
-            Err(_) => { println!("opcode not implemented: {}", opcode); panic!("opcode not implemented") }
-        };    
+    fn step(&mut self) -> std::io::Result<()> {
+        let opcode = self.fetch_byte()?;
+        let instr = parse_opcode(opcode)?;
+        instr.execute(self)?;
+        Ok(())
     }
 
-    fn load_rom(&mut self, data: &[Byte], base_address: Word) {
-        let max = data.len() - 1;
+    fn load_rom(&mut self, data: &[Byte], len: usize, base_address: Word) -> std::io::Result<()> {
+        let datalen = data.len();
+        if len > datalen || len == 0 || datalen==0 { return Err(Error::new(ErrorKind::Other, "invalid program, length")) }
+        let max = len - 1;
         let baseaddress: usize = base_address as usize;
-        if max + baseaddress > 0xffff { panic!("program does not fit in available memory") }
+        if max + baseaddress > 0xffff { return Err(Error::new(ErrorKind::Other, "program does not fit in memory")) }
         for index in 0..max {
             self.memory.write((baseaddress + index) as Word, data[index]);
         }
+        Ok(())
     }
+}
 
-    fn fetch_byte(&mut self) -> Byte {
+impl VirtualCpu for Cpu {
+    fn fetch_byte(&mut self) -> std::io::Result<Byte> {
         let byte = self.memory.read(self.pc);
         if self.pc == 0xffff {
-            self.flags[CpuFlags::BREAK] = 1;
+            self.flags[CpuFlags::BREAK] = true;
         } else {
             self.pc += 1;
         }
-        byte
+        Ok(byte)
     }
 
-    fn fetch_word(&mut self) -> Word { create_word((self.fetch_byte(), self.fetch_byte())) }
+    fn fetch_word(&mut self) -> std::io::Result<Word> { Ok(create_word((self.fetch_byte()?, self.fetch_byte()?))) }
     fn get_a(&self) -> Byte { self.a }
     fn set_a(&mut self, value: Byte) { self.a = value }
     fn get_x(&self) -> Byte{ self.x }
@@ -82,7 +90,7 @@ impl VirtualCpu for Cpu {
     fn set_sp(&mut self, value: Word) { self.sp = value }
     fn get_flag(&self, flag: CpuFlag) -> Bit { self.flags[flag] }
     fn set_flag(&mut self, flag: CpuFlag, value: Bit) { self.flags[flag] = value }
-    fn read_memory(&self, address: Word) -> Byte { self.memory.read(address) }
-    fn read_memory_word(&self, address: Word) -> Word { create_word((self.read_memory(address), self.read_memory(address + 1)))}
-    fn write_memory(&mut self, address: Word, value: Byte) { self.memory.write(address, value) }
+    fn read_byte(&self, address: Word) -> Byte { self.memory.read(address) }
+    fn read_word(&self, address: Word) -> Word { create_word((self.read_byte(address), self.read_byte(address + 1)))}
+    fn write_byte(&mut self, address: Word, value: Byte) { self.memory.write(address, value) }
 }

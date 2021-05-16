@@ -1,4 +1,5 @@
-pub(crate) mod constants;
+pub(crate) mod types;
+pub(crate) mod traits;
 pub(crate) mod memory;
 pub(crate) mod cpu;
 pub(crate) mod instruction;
@@ -9,24 +10,26 @@ extern crate clap;
 use clap::App;
 use std::io::{self, BufRead};
 use crate::cpu::Cpu;
-use crate::constants::{Byte, VirtualCpu, Factory};
+use crate::types::{ Byte };
+use crate::traits::{ CpuController, Factory };
 use std::fs::File;
 use std::io::prelude::*;
 
 fn main() -> std::io::Result<()>  {
     let mut vm = setup_machine()?;
-    vm.reset();
+    vm.reset()?;
     println!("Starting VM..");
-    vm.run();
+    vm.run()?;
     println!("VM halted.");
-    wait_for_enter();
+    wait_for_enter()?;
     Ok(())
 }
 
-fn wait_for_enter() {
+fn wait_for_enter() -> std::io::Result<()> {
     let mut line = String::new();
     let stdin = io::stdin();
-    let _ = stdin.lock().read_line(&mut line);
+    let _ = stdin.lock().read_line(&mut line)?;
+    Ok(())
 }
 
 fn load_rom(filename: &str) -> std::io::Result<([Byte;0xffff], usize)> {
@@ -36,7 +39,7 @@ fn load_rom(filename: &str) -> std::io::Result<([Byte;0xffff], usize)> {
     Ok((data, len))
 }
 
-fn setup_machine() -> std::io::Result<Cpu> {
+fn setup_machine() -> std::io::Result<Box<dyn CpuController + 'static>> {
     let yaml = load_yaml!("app.yml");
     let command_line_args = App::from_yaml(yaml).get_matches();
     let romfilename = match command_line_args.value_of("INPUT") {
@@ -54,6 +57,6 @@ fn setup_machine() -> std::io::Result<Cpu> {
         _ => { panic!("invalid rom file"); }
     };
     let mut cpu = Cpu::new();
-    cpu.load_rom(&rom.0, 0);
-    Ok(cpu)
+    cpu.load_rom(&rom.0, rom.1, 0)?;
+    Ok(Box::new(cpu))
 }

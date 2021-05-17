@@ -67,9 +67,11 @@ pub trait VirtualCpu {
 /// Generic CPU instruction
 pub trait Instruction {
     /// the textual representation
-    fn opcode(&self) -> &str;
+    fn opcode(&self) -> & 'static str;
+
     /// the binary opcode
     fn hexcode(&self) -> Byte;
+
     /// execute the opcode's logic on a virtual cpu
     fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()>;
 }

@@ -20,8 +20,11 @@ impl Factory for Cpu {
     fn new() -> Self {
         Self { 
             memory: Memory::new(),
-            a : 0, x : 0, y : 0, 
-            pc : 0xFFFC, sp : 0x0100,
+            a : 0, 
+            x : 0, 
+            y : 0, 
+            pc : 0xFFFC, 
+            sp : 0x0100,
             flags : [false; 8]
         }
     }

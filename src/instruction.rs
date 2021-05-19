@@ -31,6 +31,16 @@ pub fn parse_opcode(opcode: Byte) -> std::result::Result<Box<dyn Instruction + '
         0xad => { Ok(Box::new(LdaAbs {})) }
         0xbd => { Ok(Box::new(LdaAbsX {})) }
 
+        // Sta
+        0x85 => { Ok(Box::new(StaZp {}))}
+        0x95 => { Ok(Box::new(StaZpX {}))}
+        0x8D => { Ok(Box::new(StaAbs {}))}
+        0x9D => { Ok(Box::new(StaAbsX {}))}
+        0x99 => { Ok(Box::new(StaAbsY {}))}
+        0x81 => { Ok(Box::new(StaIndX {}))} 
+        0x91 => { Ok(Box::new(StaIndY {}))}
+
+        
         _ => { Err(Error::new(ErrorKind::Other, format!("opcode {} not implemented", opcode))) }
     }
 }

@@ -1,14 +1,17 @@
 use crate::traits::{ Instruction, VirtualCpu };
-use crate::types::{ Byte, Word, CpuFlags };
+use crate::types::{ Byte };
+use crate::instructions::generic::*;
+
 
 /// AdcIndX: ADC indirect, indexed by X
 pub struct AdcIndX { }
 impl Instruction for AdcIndX {
     fn opcode (&self) -> &'static str  { "ADC"}
     fn hexcode(&self) -> Byte { 0x61 }
-    fn execute(&self, _cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
-        panic!("opcode ADC (Adc) not implemented!");
-        // Ok(())
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let num = fetch_indx_val(cpu)?;
+        add_to_acc(cpu, num);
+        Ok(())
     }
 }
 
@@ -18,14 +21,8 @@ impl Instruction for AdcZp {
     fn opcode (&self) -> &'static str  { "ADC"}
     fn hexcode(&self) -> Byte { 0x65 }
     fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
-        let addr = cpu.fetch_byte()? as Word;
-        let num = cpu.read_byte(addr);
-        let a = cpu.get_a();
-        let result = num + a;
-        if result < num || result < a {
-            cpu.set_flag(CpuFlags::OVERFLOW, true);
-        }
-        cpu.set_a(result);
+        let num = fetch_zp_val(cpu)?;
+        add_to_acc(cpu, num);
         Ok(())
     }
 }
@@ -36,13 +33,8 @@ impl Instruction for AdcImm {
     fn opcode (&self) -> &'static str  { "ADC"}
     fn hexcode(&self) -> Byte { 0x69 }
     fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
-        let num = cpu.fetch_byte()?;
-        let a = cpu.get_a();
-        let result = num + a;
-        if result < num || result < a {
-            cpu.set_flag(CpuFlags::OVERFLOW, true);
-        }
-        cpu.set_a(result);
+        let num = fetch_imm_val(cpu)?;
+        add_to_acc(cpu, num);
         Ok(())
     }
 }
@@ -52,9 +44,10 @@ pub struct AdcAbs { }
 impl Instruction for AdcAbs {
     fn opcode (&self) -> &'static str  { "ADC"}
     fn hexcode(&self) -> Byte { 0x6D }
-    fn execute(&self, _cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
-        panic!("opcode ADC (Adc) not implemented!");
-        // Ok(())
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let num = fetch_abs_val(cpu)?;
+        add_to_acc(cpu, num);
+        Ok(())
     }
 }
 
@@ -63,9 +56,10 @@ pub struct AdcIndY { }
 impl Instruction for AdcIndY {
     fn opcode (&self) -> &'static str  { "ADC"}
     fn hexcode(&self) -> Byte { 0x71 }
-    fn execute(&self, _cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
-        panic!("opcode ADC (Adc) not implemented!");
-        // Ok(())
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let num = fetch_indy_val(cpu)?;
+        add_to_acc(cpu, num);
+        Ok(())
     }
 }
 
@@ -74,9 +68,10 @@ pub struct AdcZpX { }
 impl Instruction for AdcZpX {
     fn opcode (&self) -> &'static str  { "ADC"}
     fn hexcode(&self) -> Byte { 0x75 }
-    fn execute(&self, _cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
-        panic!("opcode ADC (Adc) not implemented!");
-        // Ok(())
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let num = fetch_zpx_val(cpu)?;
+        add_to_acc(cpu, num);
+        Ok(())
     }
 }
 
@@ -85,9 +80,10 @@ pub struct AdcAbsY { }
 impl Instruction for AdcAbsY {
     fn opcode (&self) -> &'static str  { "ADC"}
     fn hexcode(&self) -> Byte { 0x79 }
-    fn execute(&self, _cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
-        panic!("opcode ADC (Adc) not implemented!");
-        // Ok(())
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let num = fetch_absy_val(cpu)?;
+        add_to_acc(cpu, num);
+        Ok(())
     }
 }
 
@@ -96,8 +92,9 @@ pub struct AdcAbsX { }
 impl Instruction for AdcAbsX {
     fn opcode (&self) -> &'static str  { "ADC"}
     fn hexcode(&self) -> Byte { 0x7D }
-    fn execute(&self, _cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
-        panic!("opcode ADC (Adc) not implemented!");
-        // Ok(())
+    fn execute(&self, cpu: &mut dyn VirtualCpu) -> std::io::Result<()> {
+        let num = fetch_absx_val(cpu)?;
+        add_to_acc(cpu, num);
+        Ok(())
     }
 }

@@ -1,7 +1,7 @@
 use crate::types::{ Byte, Word, Bit, CpuFlags, CpuFlag };
 use crate::traits::{ VirtualCpu, CpuController, Factory, MemoryController };
 use crate::memory::Memory;
-use crate::instruction::{parse_opcode};
+use crate::instructions::{parse_opcode};
 use std::io::{Error, ErrorKind};
 
 fn create_word(bytes: (Byte, Byte)) -> Word { ((bytes.0 as Word) << 8) | bytes.1 as Word }

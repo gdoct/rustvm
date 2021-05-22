@@ -2,7 +2,8 @@ pub(crate) mod types;
 pub(crate) mod traits;
 pub(crate) mod memory;
 pub(crate) mod cpu;
-pub(crate) mod instruction;
+pub(crate) mod parser;
+pub(crate) mod instructions;
 
 #[macro_use]
 extern crate clap;

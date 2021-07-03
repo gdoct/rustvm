@@ -41,9 +41,9 @@ pub trait VirtualCpu {
     fn set_pc(&mut self, value: Word);
     
     /// set the contents of the SP (stack pointer)
-    fn get_sp(&self) -> Word;
+    fn get_sp(&self) -> Byte;
     /// set the contents of the SP (stack pointer)
-    fn set_sp(&mut self, value: Word);
+    fn set_sp(&mut self, value: Byte);
     
     /// get the specified CPU flag
     fn get_flag(&self, flag: CpuFlag) -> Bit;

@@ -98,8 +98,8 @@ impl VirtualCpu for Cpu {
     fn set_y(&mut self, value: Byte) { self.y = value }
     fn get_pc(&self) -> Word{ self.pc }
     fn set_pc(&mut self, value: Word) { self.pc = value }
-    fn get_sp(&self) -> Word{ self.sp }
-    fn set_sp(&mut self, value: Word) { self.sp = value }
+    fn get_sp(&self) -> Byte{ self.sp }
+    fn set_sp(&mut self, value: Byte) { self.sp = value }
     fn get_flag(&self, flag: CpuFlag) -> Bit { self.flags[flag] }
     fn set_flag(&mut self, flag: CpuFlag, value: Bit) { self.flags[flag] = value }
     fn read_byte(&self, address: Word) -> Byte { self.memory.read(address) }

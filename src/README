@@ -1,0 +1,2 @@
+This is a naive implementation of an 8-bit virtual machine with 18-bit addressing. 
+The machine will support the full 6502 instruction set when done

@@ -1,4 +1,4 @@
-use crate::traits::{ Instruction, VirtualCpu };
+use crate::traits::{ VirtualCpu };
 use crate::types::{ Byte, Word, CpuFlags };
 
 pub fn fetch_imm_val(cpu: &mut dyn VirtualCpu) -> std::io::Result<Byte> {
@@ -19,6 +19,7 @@ pub fn fetch_zpx_val(cpu: &mut dyn VirtualCpu) -> std::io::Result<Byte> {
     Ok(cpu.read_byte(addr))
 }
 
+#[allow(dead_code)]
 pub fn fetch_zpy_val(cpu: &mut dyn VirtualCpu) -> std::io::Result<Byte> {
     let mut addr = (cpu.fetch_byte()? + cpu.get_y()) as Word;
     if addr > 0xff {
@@ -72,4 +73,14 @@ pub fn add_to_acc(cpu: &mut dyn VirtualCpu, num: u8) {
         cpu.set_flag(CpuFlags::OVERFLOW, true);
     }
     cpu.set_a(result);
+}
+
+pub fn jump_relative(cpu: &mut dyn VirtualCpu, relative: Byte) {
+    let mut pc = cpu.get_pc();
+    if relative > 127 {
+        pc = pc + (relative - 128) as u16;
+    } else {
+        pc = pc - (relative as u16);
+    }
+    cpu.set_pc(pc);
 }
